@@ -61,3 +61,4 @@ No new features until gates are live — the mistake every framework made.
 | v0.3 | 132 | 12/12 efficient | counterfactual 2/2 (1.0), dream transfer 1.0 | world simulate + masked + practice + vote |
 | v1.0 | 164 | 12/12 efficient | CLI 11/11, hive no-leak, panel snapshot, clean venv install | CLI face + canvas + hive + panel + CI |
 | v1.1 | 170 | 24/24 efficient (6 families) | rule 5 seeds × 100%, random 0/24, grids to 8×8 | ARC expansion: rotate/invert/border |
+| v1.2 | 177 | 24/24 efficient | good-actor promotes, bad-actor gated, 2nd night repeats | auto-curriculum: propose→dream→practice→promote + CLI |
