@@ -51,3 +51,10 @@ sleep/     consolidation: memory + connectome replay + dream gym
 
 P1 graph planner + skills · P2 world simulate + sleep · P3 face + hive.
 No new features until gates are live — the mistake every framework made.
+
+## 6. Scoreboard
+
+| Tag | Tests | ARC rule_solver | ARC random | E2E |
+|---|---|---|---|---|
+| v0.1 | 58 | — | — | — |
+| v0.2 | 110 | 12/12 efficient | 0/12 (measures something) | CLI brain → graph → VERIFIED artifact |
