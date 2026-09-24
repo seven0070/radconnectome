@@ -59,3 +59,4 @@ No new features until gates are live — the mistake every framework made.
 | v0.1 | 58 | — | — | — |
 | v0.2 | 110 | 12/12 efficient | 0/12 (measures something) | CLI brain → graph → VERIFIED artifact |
 | v0.3 | 132 | 12/12 efficient | counterfactual 2/2 (1.0), dream transfer 1.0 | world simulate + masked + practice + vote |
+| v1.0 | 164 | 12/12 efficient | CLI 11/11, hive no-leak, panel snapshot, clean venv install | CLI face + canvas + hive + panel + CI |
