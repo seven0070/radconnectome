@@ -235,6 +235,26 @@ def cmd_evolve(args) -> int:
     return 1
 
 
+def cmd_curriculum(args) -> int:
+    from rcx import curriculum as _cu
+    from rcx import dream as _dream
+    home = _home(args)
+    act = args.action
+    if act == "history":
+        hist = _cu.history(home)
+        return _out(args, {"history": hist},
+                    [f"promoted={h.get('promoted')} transfer={h.get('transfer')}"
+                     for h in hist] or ["(no cycles yet)"])
+    if act == "run":
+        rep = _cu.run_cycle(home, _dream.write_actor, n=args.n)
+        lines = [f"proposed: {rep['proposed']}, transfer: {rep['transfer']:.2f}, "
+                 f"promoted: {rep['promoted']}"
+                 + (f" ({rep['skill']})" if rep.get("skill") else "")]
+        return _out(args, rep, lines)
+    print(f"unknown curriculum action: {act}", file=sys.stderr)
+    return 1
+
+
 def cmd_sleep(args) -> int:
     from rcx.sleep import run_sleep
     rep = run_sleep(_home(args))
@@ -296,6 +316,8 @@ def build_parser() -> "argparse.ArgumentParser":
         lambda c: c.add_argument("--n", type=int, default=4))
     ev = add("evolve", ["vote", "history"], "majority vote", cmd_evolve,
              lambda c: c.add_argument("--opts", nargs="*", default=[]))
+    cu = add("curriculum", ["run", "history"], "nightly auto-curriculum", cmd_curriculum,
+             lambda c: c.add_argument("--n", type=int, default=4))
     sl = sub.add_parser("sleep", help="nightly refinement")
     sl.set_defaults(fn=cmd_sleep)
     co = sub.add_parser("cost", help="spend rollup")

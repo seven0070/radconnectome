@@ -93,3 +93,19 @@ def test_sleep_cost(argv_home, capsys):
     assert run(["sleep"], capsys)[0] == 0
     rc, out, _ = run(["cost"], capsys)
     assert rc == 0 and "today" in out
+
+
+def test_curriculum_cli(argv_home, capsys):
+    rc, out, _ = run(["curriculum", "history"], capsys)
+    assert rc == 0 and "no cycles" in out
+    rc, out, _ = run(["curriculum", "run", "--n", "1"], capsys)
+    assert rc == 0 and "proposed: False" in out  # no history yet
+
+
+def test_write_actor(tmp_path):
+    from rcx.dream import write_actor
+    reply, arts = write_actor("Write hi.txt containing 'hey'", str(tmp_path))
+    assert arts == ["hi.txt"]
+    assert (tmp_path / "hi.txt").read_text() == "hey"
+    reply, arts = write_actor("ponder existence", str(tmp_path))
+    assert arts == [] and "nothing" in reply

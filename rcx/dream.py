@@ -56,6 +56,22 @@ def generate(home: RcxHome, n: int = 4) -> List[DreamTask]:
     return tasks
 
 
+def write_actor(step_text: str, workspace: str) -> Tuple[str, List[str]]:
+    """Built-in dream actor: fulfills `Write X containing 'Y'` steps for real.
+
+    Anything else returns a no-op (never lies about doing work).
+    """
+    import re
+    from pathlib import Path
+    m = re.search(r"Write (\S+) containing '(.*)'", step_text)
+    if not m:
+        return ("DONE: nothing to do", [])
+    p = Path(workspace) / m.group(1)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(m.group(2), encoding="utf-8")
+    return (f"DONE: wrote {m.group(1)}", [m.group(1)])
+
+
 def practice(home: RcxHome, tasks: List[DreamTask],
              act: DreamAct, workspace: str = "") -> Dict[str, Any]:
     """Run dream tasks through the verifying executor. Returns transfer rate."""
