@@ -54,10 +54,12 @@ def test_tribe_show_predict(argv_home, capsys):
 
 
 def test_arc_run_and_json(argv_home, capsys):
+    from rcx.arc import FAMILIES
+    n_fam = len(FAMILIES)
     rc, out, _ = run(["arc", "run", "--seed", "0", "--n", "1"], capsys)
-    assert rc == 0 and "3/3" in out
+    assert rc == 0 and f"{n_fam}/{n_fam}" in out
     rc, out, _ = run(["--json", "arc", "run", "--seed", "0", "--n", "1"], capsys)
-    assert rc == 0 and json.loads(out)["total"] == 3
+    assert rc == 0 and json.loads(out)["total"] == n_fam
 
 
 def test_graph_author_inspect(argv_home, capsys, home):
