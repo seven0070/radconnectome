@@ -22,8 +22,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 Grid = List[List[int]]
 
 # Human baseline: steps a person needs per task family (generous).
-HUMAN_BASELINE_STEPS = {"shift": 3, "recolor": 3, "mirror": 4}
+HUMAN_BASELINE_STEPS = {"shift": 3, "recolor": 3, "mirror": 4,
+                        "rotate": 4, "invert": 3, "border": 4}
 MAX_STEPS_FACTOR = 5  # hard cutoff at 5x human baseline (ARC-AGI-3 rule)
+
+FAMILIES = ("shift", "recolor", "mirror", "rotate", "invert", "border")
 
 
 @dataclass
@@ -39,7 +42,8 @@ class ArcTask:
                 "heldout_in": self.heldout_in, "seed": self.seed}
 
 
-def _shift(g: Grid, dx: int, dy: int, h: int, w: int) -> Grid:
+def _shift(g: Grid, dx: int = 1, dy: int = 0) -> Grid:
+    h, w = len(g), len(g[0])
     out = [[0] * w for _ in range(h)]
     for y in range(h):
         for x in range(w):
@@ -49,21 +53,44 @@ def _shift(g: Grid, dx: int, dy: int, h: int, w: int) -> Grid:
     return out
 
 
+def _recolor(g: Grid) -> Grid:
+    return [[(c + 1) if c else 0 for c in row] for row in g]
+
+
+def _mirror(g: Grid) -> Grid:
+    return [row[::-1] for row in g]
+
+
+def _rotate(g: Grid) -> Grid:
+    """90° clockwise. Output dims swap (w x h)."""
+    h, w = len(g), len(g[0])
+    return [[g[h - 1 - j][i] for j in range(h)] for i in range(w)]
+
+
+def _invert(g: Grid) -> Grid:
+    """Binary inversion: nonzero → 0, zero → 1."""
+    return [[0 if c else 1 for c in row] for row in g]
+
+
+def _border(g: Grid) -> Grid:
+    """Paint the outer ring color 4, keep the interior."""
+    h, w = len(g), len(g[0])
+    return [[4 if y in (0, h - 1) or x in (0, w - 1) else c
+             for x, c in enumerate(row)] for y, row in enumerate(g)]
+
+
+RULES = {"shift": _shift, "recolor": _recolor, "mirror": _mirror,
+         "rotate": _rotate, "invert": _invert, "border": _border}
+
+
 def _gen_task(family: str, rng: random.Random) -> ArcTask:
-    h, w = rng.randint(3, 6), rng.randint(3, 6)
+    h, w = rng.randint(3, 8), rng.randint(3, 8)
     colors = [1, 2, 3, 4]
 
     def rand_grid() -> Grid:
         return [[rng.choice([0] * 3 + colors) for _ in range(w)] for _ in range(h)]
 
-    def rule(g: Grid) -> Grid:
-        if family == "shift":
-            return _shift(g, 1, 0, h, w)
-        if family == "recolor":
-            return [[(c + 1) if c else 0 for c in row] for row in g]
-        # mirror
-        return [row[::-1] for row in g]
-
+    rule = RULES[family]
     examples = [(g := rand_grid(), rule(g)) for _ in range(3)]
     hi = rand_grid()
     seed = rng.randint(0, 10 ** 9)
@@ -75,7 +102,7 @@ def generate(n_per_family: int = 4, seed: int = 0) -> List[ArcTask]:
     to any solver that never saw them)."""
     rng = random.Random(seed)
     tasks = []
-    for fam in ("shift", "recolor", "mirror"):
+    for fam in FAMILIES:
         for _ in range(n_per_family):
             tasks.append(_gen_task(fam, rng))
     return tasks
@@ -95,19 +122,19 @@ def random_baseline(examples: List[Tuple[Grid, Grid]], heldin: Grid) -> Tuple[Gr
 
 
 def rule_solver(examples: List[Tuple[Grid, Grid]], heldin: Grid) -> Tuple[Grid, int]:
-    """Infers the rule from examples (shift/recolor/mirror) and applies it.
+    """Infers the rule from ALL examples (tries every family) and applies it.
 
     This is the reference solver a real agent harness must beat-or-match.
     Counts 2 steps (infer + apply) — inside every human baseline.
     """
-    (a_in, a_out), (b_in, b_out) = examples[0], examples[1]
-    h, w = len(heldin), len(heldin[0])
-    if _shift(a_in, 1, 0, len(a_in), len(a_in[0])) == a_out:
-        return (_shift(heldin, 1, 0, h, w), 2)
-    recol_a = [[(c + 1) if c else 0 for c in row] for row in a_in]
-    if recol_a == a_out:
-        return ([[(c + 1) if c else 0 for c in row] for row in heldin], 2)
-    return ([row[::-1] for row in heldin], 2)
+    for name in FAMILIES:
+        fn = RULES[name]
+        try:
+            if all(fn(g_in) == g_out for g_in, g_out in examples):
+                return (fn(heldin), 2)
+        except Exception:
+            continue
+    return ([row[::-1] for row in heldin], 2)  # fallback: mirror
 
 
 @dataclass
