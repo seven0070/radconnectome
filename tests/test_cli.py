@@ -95,6 +95,13 @@ def test_sleep_cost(argv_home, capsys):
     assert rc == 0 and "today" in out
 
 
+def test_thinking_cli(argv_home, capsys):
+    rc, out, _ = run(["thinking", "report"], capsys)
+    assert rc == 0 and "tools-per-verified" in out
+    rc, out, _ = run(["thinking", "budget", "refactor", "the", "cache"], capsys)
+    assert rc == 0 and "hard" in out
+
+
 def test_curriculum_cli(argv_home, capsys):
     rc, out, _ = run(["curriculum", "history"], capsys)
     assert rc == 0 and "no cycles" in out
