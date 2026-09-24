@@ -255,6 +255,29 @@ def cmd_curriculum(args) -> int:
     return 1
 
 
+def cmd_thinking(args) -> int:
+    from rcx.thinking import ThinkingBudget
+    tb = ThinkingBudget(_home(args))
+    act = args.action
+    if act == "report":
+        r = tb.report()
+        lines = ["tools-per-verified (down is better):"]
+        for b, s in r["bands"].items():
+            cpv = s["tools_per_verified"]
+            lines.append(f"  {b:<8} {s['verified']}/{s['tasks']} verified · "
+                         f"{'—' if cpv is None else f'{cpv:.1f}'} tools/verified · "
+                         f"{s['attempts']} attempts")
+        lines.append(f"overall: {r['overall_tools_per_verified']}")
+        return _out(args, r, lines)
+    if act == "budget":
+        text = " ".join(args.term) or "task"
+        b = tb.allocate(text)
+        return _out(args, b, [f"{b['band']}: {b['attempts']} attempts, "
+                              f"{b['tools']} tools (cap {b['cap']})"])
+    print(f"unknown thinking action: {act}", file=sys.stderr)
+    return 1
+
+
 def cmd_sleep(args) -> int:
     from rcx.sleep import run_sleep
     rep = run_sleep(_home(args))
@@ -318,6 +341,7 @@ def build_parser() -> "argparse.ArgumentParser":
              lambda c: c.add_argument("--opts", nargs="*", default=[]))
     cu = add("curriculum", ["run", "history"], "nightly auto-curriculum", cmd_curriculum,
              lambda c: c.add_argument("--n", type=int, default=4))
+    th = add("thinking", ["report", "budget"], "adaptive thinking budget", cmd_thinking)
     sl = sub.add_parser("sleep", help="nightly refinement")
     sl.set_defaults(fn=cmd_sleep)
     co = sub.add_parser("cost", help="spend rollup")
